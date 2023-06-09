@@ -13,42 +13,25 @@ import { v4 } from "uuid";
 // Import Bootstrap styles
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-function parsePDF(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const buffer = reader.result;
-      const decoder = new TextDecoder("utf-8");
-      const text = decoder.decode(buffer);
-      resolve(text);
-    };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
-}
-
 function App() {
   // Use the useState hook to create a state variable called fileUpload, initially set to null
   const [fileUpload, setFileUpload] = useState(null);
   // Define a function called uploadFile
-const uploadFile = async () => {
-  if (!fileUpload) return;
+  const uploadFile = () => {
+    // If fileUpload is null or undefined, return and do nothing
+    if (!fileUpload) return;
 
-  const fileRef = ref(storage, `files/${v4()}.pdf`);
-  const textRef = ref(storage, `files/${v4()}.txt`);
+    // Create a file reference in the storage object using the file's name and a v4 uuid
+    const fileRef = ref(storage, `files/${fileUpload.name + v4()}`);
 
-  const text = await parsePDF(fileUpload);
+    // Upload the file to the storage object using the uploadBytes function and the file reference
+    uploadBytes(fileRef, fileUpload).then(() => {
+      // Parse contents of fileUpload, and store into txtUpload
 
-  await Promise.all([
-    uploadBytes(fileRef, fileUpload),
-    uploadBytes(textRef, new Blob([text], { type: "text/plain" })),
-  ]);
-
-  setFileUpload(null);
-  //done
-
-  alert("File uploaded successfully!");
-};
+      // Alert the user that the file was successfully uploaded
+      alert("File Uploaded");
+    })
+  }
   
   // Render an input element that allows users to select a file to upload
   // Add an event listener on the input element that sets the fileUpload state to the selected file
