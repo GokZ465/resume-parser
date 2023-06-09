@@ -45,6 +45,7 @@ const uploadFile = async () => {
   ]);
 
   setFileUpload(null);
+  //done
 
   alert("File uploaded successfully!");
 };
