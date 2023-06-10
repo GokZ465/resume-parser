@@ -122,10 +122,10 @@ function App() {
     )}`;
     return fetch(proxyUrl)
       .then((response) => response.text())
-      .then((fileContent) => ({ name: fileName, content: fileContent }))
+      .then((fileContent) => ({ name: fileName, content: fileContent, url })) // Include the 'url' property
       .catch((error) => {
         console.log("Fetch Error:", error);
-        return { name: fileName, content: null };
+        return { name: fileName, content: null, url }; // Include the 'url' property
       });
   };
 
@@ -193,12 +193,13 @@ function App() {
                     className="list-group-item d-flex justify-content-between align-items-center"
                   >
                     <span>{result.name}</span>
-                    <button
-                      className="btn btn-link"
-                      onClick={() => openFileURL(result.name)}
+                    <a
+                      href={result.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
                       View
-                    </button>
+                    </a>
                   </li>
                 ))
               )}
