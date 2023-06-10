@@ -86,47 +86,82 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <h1>Resume Storage</h1>
-      <div className="upload-section">
-        <input
-          type="file"
-          onChange={(event) => {
-            setFileUpload(event.target.files[0]);
-          }}
-        />
-        <button onClick={uploadFile}>Upload File</button>
+    <div className="container">
+      <h1 className="text-center">Resume Storage</h1>
+      <div className="row justify-content-center mb-3">
+        <div className="col-6">
+          <div className="input-group">
+            <input
+              type="file"
+              className="form-control"
+              onChange={(event) => {
+                setFileUpload(event.target.files[0]);
+              }}
+            />
+            <button
+              className="btn btn-primary"
+              onClick={uploadFile}
+              disabled={isLoading}
+            >
+              Upload File
+            </button>
+          </div>
+        </div>
       </div>
-      <div className="search-section">
-        <input
-          type="text"
-          placeholder="Search Resumes"
-          value={searchQuery}
-          onChange={(event) => {
-            setSearchQuery(event.target.value);
-          }}
-        />
-        {searchQuery.trim() === "" && (
-          <button onClick={searchFiles}>Fetch All</button>
-        )}
+      <div className="row justify-content-center mb-3">
+        <div className="col-6">
+          <div className="input-group">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search Resumes"
+              value={searchQuery}
+              onChange={(event) => {
+                setSearchQuery(event.target.value);
+              }}
+            />
+            {searchQuery.trim() === "" && (
+              <button
+                className="btn btn-secondary"
+                onClick={searchFiles}
+                disabled={isLoading}
+              >
+                Fetch All
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-      {isLoading ? (
-        <p>Loading...</p>
-      ) : (
-        <ul className="results-list">
-          {searchResults.length === 0 ? (
-            <li>No results found</li>
+      <div className="row justify-content-center">
+        <div className="col-6">
+          {isLoading ? (
+            <p className="text-center">Loading...</p>
           ) : (
-            searchResults.map((result) => (
-              <li key={result.name}>
-                <button onClick={() => openFileURL(result.name)}>
-                  {result.name}
-                </button>
-              </li>
-            ))
+            <ul className="list-group">
+              {searchResults.length === 0 ? (
+                <li className="list-group-item text-center">
+                  No results found
+                </li>
+              ) : (
+                searchResults.map((result) => (
+                  <li
+                    key={result.name}
+                    className="list-group-item d-flex justify-content-between align-items-center"
+                  >
+                    <span>{result.name}</span>
+                    <button
+                      className="btn btn-link"
+                      onClick={() => openFileURL(result.name)}
+                    >
+                      View
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
           )}
-        </ul>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
