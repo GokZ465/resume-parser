@@ -3,6 +3,7 @@ import { storage } from "./firebase";
 import { ref, uploadBytes, listAll, getDownloadURL } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist/webpack";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   const [fileUpload, setFileUpload] = useState(null);
@@ -152,5 +153,4 @@ function App() {
     </div>
   );
 }
-
 export default App;
