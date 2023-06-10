@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { storage } from "./firebase";
 import { ref, uploadBytes, listAll, getDownloadURL } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
-import { GlobalWorkerOptions, getDocument } from "pdfjs-dist/webpack";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
   const [fileUpload, setFileUpload] = useState(null);
@@ -37,49 +36,13 @@ function App() {
     const fileReader = new FileReader();
     fileReader.onload = function () {
       const typedArray = new Uint8Array(this.result);
-      getDocument(typedArray)
-        .promise.then(function (pdfDocument) {
-          const totalPages = pdfDocument.numPages;
-
-          const getPageText = (page) =>
-            page.getTextContent().then(function (textContent) {
-              const pageText = textContent.items
-                .map((item) => item.str)
-                .join(" ");
-              return pageText;
-            });
-
-          const getPagePromises = Array.from({ length: totalPages }, (_, i) =>
-            pdfDocument.getPage(i + 1).then(getPageText)
-          );
-
-          Promise.all(getPagePromises)
-            .then((pageTexts) => {
-              const parsedText = pageTexts.join("\n");
-              storeParsedText(parsedText, file);
-            })
-            .catch((error) => {
-              console.log("PDF Parsing Error:", error);
-            });
-        })
-        .catch((error) => {
-          console.log("PDF Loading Error:", error);
-        });
+      // ...
     };
     fileReader.readAsArrayBuffer(file);
   };
 
-  const storeParsedText = (parsedText, file) => {
-    const textFileRef = ref(storage, `files/${file.name}.txt`);
-    const textFileBlob = new Blob([parsedText], { type: "text/plain" });
-
-    uploadBytes(textFileRef, textFileBlob)
-      .then(() => {
-        console.log("Parsed text stored as text file");
-      })
-      .catch((error) => {
-        console.log("Text File Upload Error:", error);
-      });
+  const openFileURL = (url) => {
+    window.open(url, "_blank");
   };
 
   const searchFiles = () => {
@@ -88,15 +51,12 @@ function App() {
     listAll(filesRef)
       .then((res) => {
         const searchPromises = res.items.map((item) =>
-          getDownloadURL(item).then((url) => ({
-            name: item.name,
-            url: url,
-          }))
+          getDownloadURL(item).then((url) => fetchProxyFileContent(url))
         );
         Promise.all(searchPromises)
           .then((results) => {
             const filteredResults = results.filter((result) =>
-              result.name.toLowerCase().includes(searchQuery.toLowerCase())
+              result.content.toLowerCase().includes(searchQuery.toLowerCase())
             );
             setSearchResults(filteredResults);
             setIsLoading(false);
@@ -109,6 +69,19 @@ function App() {
       .catch((error) => {
         console.log("Listing Files Error:", error);
         setIsLoading(false);
+      });
+  };
+
+  const fetchProxyFileContent = (url) => {
+    const proxyUrl = `http://localhost:3001/fetch-file?url=${encodeURIComponent(
+      url
+    )}`;
+    return fetch(proxyUrl)
+      .then((response) => response.text())
+      .then((fileContent) => ({ name: url, content: fileContent }))
+      .catch((error) => {
+        console.log("Fetch Error:", error);
+        return { name: url, content: null };
       });
   };
 
@@ -141,16 +114,21 @@ function App() {
         <p>Loading...</p>
       ) : (
         <ul className="results-list">
-          {searchResults.map((result) => (
-            <li key={result.name}>
-              <a href={result.url} target="_blank" rel="noopener noreferrer">
-                {result.name}
-              </a>
-            </li>
-          ))}
+          {searchResults.length === 0 ? (
+            <li>No results found</li>
+          ) : (
+            searchResults.map((result) => (
+              <li key={result.name}>
+                <button onClick={() => openFileURL(result.name)}>
+                  {result.name}
+                </button>
+              </li>
+            ))
+          )}
         </ul>
       )}
     </div>
   );
 }
+
 export default App;
