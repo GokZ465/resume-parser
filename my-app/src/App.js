@@ -3,7 +3,11 @@ import { storage } from "./firebase";
 import { ref, uploadBytes, listAll, getDownloadURL } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
 import "bootstrap/dist/css/bootstrap.min.css";
+import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
+import * as pdfjsLib from "pdfjs-dist/build/pdf";
 
+// Initialize PDF.js with the worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 function App() {
   const [fileUpload, setFileUpload] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,9 +40,47 @@ function App() {
     const fileReader = new FileReader();
     fileReader.onload = function () {
       const typedArray = new Uint8Array(this.result);
-      // ...
+      const loadingTask = pdfjsLib.getDocument(typedArray);
+      loadingTask.promise.then(function (pdf) {
+        const numPages = pdf.numPages;
+        const getPageText = (page) =>
+          page.getTextContent().then(function (textContent) {
+            const pageText = textContent.items
+              .map((item) => item.str)
+              .join(" ");
+            return pageText;
+          });
+
+        const getPagePromises = Array.from(
+          { length: numPages },
+          (_, i) => i + 1
+        ).map((pageNum) => pdf.getPage(pageNum).then(getPageText));
+
+        Promise.all(getPagePromises)
+          .then((pageTexts) => {
+            const parsedText = pageTexts.join("\n");
+            storeParsedText(parsedText, file);
+          })
+          .catch((error) => {
+            console.log("PDF Parsing Error:", error);
+          });
+      });
     };
     fileReader.readAsArrayBuffer(file);
+  };
+
+  const storeParsedText = (parsedText, file) => {
+    const textFileRef = ref(storage, `files/${file.name}.txt`);
+    const textFileBlob = new Blob([parsedText], { type: "text/plain" });
+
+    uploadBytes(textFileRef, textFileBlob)
+      .then(() => {
+        console.log("Parsed text stored as text file");
+        searchFiles(); // Trigger search after storing parsed text
+      })
+      .catch((error) => {
+        console.log("Text File Upload Error:", error);
+      });
   };
 
   const openFileURL = (url) => {
@@ -86,6 +128,7 @@ function App() {
         return { name: fileName, content: null };
       });
   };
+
   return (
     <div className="container">
       <h1 className="text-center">Resume Storage</h1>
