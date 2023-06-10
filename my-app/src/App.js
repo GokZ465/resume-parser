@@ -51,7 +51,9 @@ function App() {
     listAll(filesRef)
       .then((res) => {
         const searchPromises = res.items.map((item) =>
-          getDownloadURL(item).then((url) => fetchProxyFileContent(url))
+          getDownloadURL(item).then((url) =>
+            fetchProxyFileContent(url, item.name)
+          )
         );
         Promise.all(searchPromises)
           .then((results) => {
@@ -72,19 +74,18 @@ function App() {
       });
   };
 
-  const fetchProxyFileContent = (url) => {
+  const fetchProxyFileContent = (url, fileName) => {
     const proxyUrl = `http://localhost:3001/fetch-file?url=${encodeURIComponent(
       url
     )}`;
     return fetch(proxyUrl)
       .then((response) => response.text())
-      .then((fileContent) => ({ name: url, content: fileContent }))
+      .then((fileContent) => ({ name: fileName, content: fileContent }))
       .catch((error) => {
         console.log("Fetch Error:", error);
-        return { name: url, content: null };
+        return { name: fileName, content: null };
       });
   };
-
   return (
     <div className="container">
       <h1 className="text-center">Resume Storage</h1>
