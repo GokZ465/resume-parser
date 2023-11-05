@@ -131,7 +131,7 @@ function App() {
 
   return (
     <div className="container">
-      <h1 className="text-center">Resume Storage</h1>
+      <h1 className="text-center">Private Cloud Storage</h1>
       <div className="row justify-content-center mb-3">
         <div className="col-6">
           <div className="input-group">
